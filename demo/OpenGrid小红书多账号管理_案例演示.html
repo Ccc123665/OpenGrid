@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>小红书 PC 端多账号全域管理工具 · 交互演示 v6.6.0</title>
+<style>
+:root{
+  --line:#E4EAF2; --line-soft:#ECF0F6; --line-hover:#D3DEED;
+  --text:#1B2536; --sub:#5C6B84; --faint:#93A1B8; --disabled:#B9C3D4;
+  --accent:#4E7FDE; --accent-soft:#EBF1FB; --accent-line:#C9DAF3;
+  --red:#E1251B; --red-dark:#C81B12; --red-soft:#EE5245;
+  --xhs:#FF2442; --xhs-soft:#FFF1F3;
+  --green:#3F9B6D;
+  --r-lg:14px; --r-md:10px; --r-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;
+  font-size:13px;color:var(--text);
+  background:linear-gradient(135deg,#EDF2F9 0%,#DFE7F1 55%,#D6E0ED 100%);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;font-size:inherit;cursor:pointer;}
+input,textarea{font-family:inherit;font-size:inherit;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:rgba(147,161,184,.4);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(147,161,184,.65);}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* ============ 舞台 / 窗口外壳 ============ */
+.stage{height:100%;padding:12px;display:flex;align-items:center;justify-content:center;}
+.app{
+  width:100%;height:100%;max-width:1680px;
+  background:linear-gradient(150deg,#FAFCFE 0%,#F3F7FC 50%,#ECF1F7 100%);
+  border:1px solid var(--line);border-radius:8px;
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 20px 55px rgba(27,37,54,.16);
+}
+.app.maximized{border-radius:0;}
+
+/* ============ 标题栏（含地址导航） ============ */
+.titlebar{
+  height:46px;flex:0 0 46px;display:flex;align-items:center;gap:8px;
+  padding:0 10px 0 16px;border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:8px;flex:0 0 auto;}
+.brand-mark{
+  width:22px;height:22px;border-radius:7px;flex:0 0 auto;
+  background:linear-gradient(135deg,var(--red),var(--red-soft));
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;
+}
+.win-title{font-size:12px;font-weight:600;letter-spacing:.3px;white-space:nowrap;}
+.demo-chip{
+  margin-left:2px;padding:2px 7px;border-radius:20px;font-size:10px;
+  background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-line);
+}
+.demo-chip:hover{background:#DEE9FA;}
+
+.tb-sep{width:1px;height:20px;background:var(--line);flex:0 0 auto;margin:0 2px;}
+.tb-nav{display:flex;align-items:center;gap:2px;flex:0 0 auto;}
+.iconbtn{
+  width:28px;height:26px;border:none;border-radius:6px;background:transparent;
+  color:var(--sub);display:flex;align-items:center;justify-content:center;transition:.15s;
+}
+.iconbtn:hover{background:rgba(78,127,222,.10);color:var(--accent);}
+.iconbtn:active{background:rgba(78,127,222,.18);}
+.iconbtn.disabled{color:var(--disabled);cursor:default;}
+.iconbtn.disabled:hover{background:transparent;color:var(--disabled);}
+
+.addr-wrap{flex:1 1 auto;min-width:120px;display:flex;align-items:center;gap:6px;}
+.addr{
+  flex:1 1 auto;height:26px;border:1px solid var(--line);border-radius:6px;
+  background:#F4F7FB;color:var(--sub);font-size:12px;padding:0 10px;
+  display:flex;align-items:center;gap:7px;overflow:hidden;transition:.15s;
+}
+.addr:hover{border-color:var(--line-hover);}
+.addr .lock{color:var(--green);flex:0 0 auto;display:flex;}
+.addr .txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.addr .sess{
+  flex:0 0 auto;margin-left:auto;padding:1px 7px;border-radius:20px;font-size:10px;
+  background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-line);white-space:nowrap;
+}
+
+.winbtns{display:flex;align-items:center;gap:2px;flex:0 0 auto;}
+.winbtn{
+  width:32px;height:24px;border:none;border-radius:7px;background:transparent;
+  color:var(--sub);display:flex;align-items:center;justify-content:center;transition:.15s;
+}
+.winbtn:hover{background:rgba(78,127,222,.10);}
+.winbtn.close:hover{background:var(--red);color:#fff;}
+
+/* ============ 主体 ============ */
+.body{flex:1 1 auto;display:flex;min-height:0;gap:8px;padding:8px;}
+.sidebar{
+  flex:0 0 240px;min-width:240px;background:#fff;border:1px solid var(--line);
+  border-radius:var(--r-lg);display:flex;flex-direction:column;overflow:hidden;transition:.18s;
+}
+.sidebar.collapsed{flex:0 0 68px;min-width:68px;}
+.main{flex:1 1 auto;display:flex;flex-direction:column;min-width:0;min-height:0;}
+
+/* ---- 侧栏（展开） ---- */
+.sb-header{padding:10px 10px 8px;}
+.sb-brand{
+  background:linear-gradient(135deg,rgba(235,241,251,.95),rgba(247,250,254,.75));
+  border:1px solid rgba(201,218,243,.7);border-radius:12px;padding:9px 11px;
+}
+.sb-brand h3{font-size:14px;font-weight:600;letter-spacing:.2px;}
+.sb-brand p{font-size:10.5px;color:var(--faint);margin-top:2px;}
+.sb-search{
+  margin:8px 10px 0;height:28px;border:1px solid var(--line);border-radius:8px;
+  background:#fff;display:flex;align-items:center;gap:6px;padding:0 9px;color:var(--faint);
+}
+.sb-search input{border:none;outline:none;flex:1;font-size:12px;color:var(--text);background:transparent;}
+.sb-list{flex:1 1 auto;overflow-y:auto;padding:6px 6px 4px;}
+.sec-label{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 8px 5px;font-size:10.5px;color:var(--faint);font-weight:600;letter-spacing:1px;
+}
+.acc-row{
+  display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;
+  border:1px solid transparent;cursor:pointer;transition:.14s;position:relative;
+}
+.acc-row:hover{background:rgba(78,127,222,.06);}
+.acc-row.selected{
+  background:linear-gradient(90deg,rgba(235,241,251,.98),rgba(255,255,255,.6));
+  border-left:3px solid var(--accent);padding-left:4px;
+}
+.acc-avatar{
+  width:26px;height:26px;border-radius:9px;flex:0 0 auto;color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;
+}
+.acc-meta{flex:1 1 auto;min-width:0;}
+.acc-name{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.acc-sub{font-size:10.5px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.acc-actions{display:none;gap:1px;flex:0 0 auto;}
+.acc-row:hover .acc-actions{display:flex;}
+.mini{width:22px;height:22px;border:none;background:transparent;border-radius:6px;color:var(--faint);display:flex;align-items:center;justify-content:center;}
+.mini:hover{background:rgba(78,127,222,.12);color:var(--accent);}
+.mini.danger:hover{background:#FDECEA;color:var(--red);}
+.acc-chev{flex:0 0 auto;color:var(--faint);display:flex;transition:.18s;}
+.acc-row.expanded .acc-chev{transform:rotate(90deg);}
+
+.plats{overflow:hidden;}
+.plat-row{
+  display:flex;align-items:center;gap:8px;height:30px;padding:0 8px 0 30px;border-radius:8px;
+  cursor:pointer;color:var(--sub);font-size:12px;transition:.14s;position:relative;
+}
+.plat-row:hover{background:rgba(78,127,222,.07);color:var(--text);}
+.plat-row.active{background:var(--accent-soft);color:var(--accent);font-weight:600;}
+.plat-row.disabled{color:var(--disabled);cursor:default;}
+.plat-row.disabled:hover{background:transparent;color:var(--disabled);}
+.plat-ico{flex:0 0 auto;display:flex;opacity:.85;}
+.dot-login{width:6px;height:6px;border-radius:50%;background:var(--green);margin-left:auto;flex:0 0 auto;}
+.dot-empty{width:6px;height:6px;border-radius:50%;background:var(--disabled);margin-left:auto;flex:0 0 auto;}
+.sb-foot{padding:8px 10px 10px;display:flex;flex-direction:column;gap:6px;}
+.btn{
+  height:34px;border:1px solid var(--line);background:#fff;border-radius:10px;color:var(--text);
+  display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s;
+}
+.btn:hover{background:#F5F8FC;border-color:var(--line-hover);}
+.btn:active{background:#EDF2F9;}
+.btn-primary,.btn-new{
+  height:34px;border:none;border-radius:10px;color:#fff;font-weight:600;
+  background:linear-gradient(135deg,var(--red),var(--red-soft));
+  display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s;
+}
+.btn-primary:hover,.btn-new:hover{background:linear-gradient(135deg,var(--red-dark),#E43E33);}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--sub);}
+.btn-ghost:hover{background:rgba(78,127,222,.07);}
+
+/* ---- 侧栏（收起） ---- */
+.sb-col{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 0;height:100%;}
+.sb-col .cbtn{
+  width:38px;height:38px;border-radius:19px;border:none;background:#fff;
+  border:1px solid var(--line);display:flex;align-items:center;justify-content:center;transition:.15s;
+}
+.sb-col .cbtn:hover{background:var(--accent-soft);border-color:var(--accent-line);}
+.sb-col .cbtn.on{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent);}
+.sb-col .cbtn.avatar{font-weight:600;font-size:14px;color:var(--text);}
+.sb-col .cbtn.red{background:linear-gradient(135deg,var(--red),var(--red-soft));color:#fff;border:none;width:38px;height:38px;border-radius:19px;}
+.sb-col .cbtn.ghost{background:transparent;border:none;color:var(--faint);}
+.sb-col .cbtn.ghost:hover{background:rgba(78,127,222,.10);}
+.sb-col .spacer{flex:1 1 auto;}
+
+/* ============ 标签栏 ============ */
+.tabbar{
+  flex:0 0 auto;display:flex;align-items:flex-end;gap:4px;height:34px;
+  padding:0 4px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
+}
+.tabbar::-webkit-scrollbar{height:0;}
+.tab{
+  flex:0 0 auto;max-width:170px;height:29px;padding:0 8px 0 12px;
+  display:flex;align-items:center;gap:6px;border-radius:8px 8px 0 0;
+  border:1px solid rgba(228,234,242,.8);border-bottom:none;
+  background:rgba(255,255,255,.55);color:var(--sub);font-size:11px;
+  transition:.15s;cursor:pointer;white-space:nowrap;
+}
+.tab:hover{background:rgba(255,255,255,.85);color:var(--text);}
+.tab.active{
+  background:#fff;color:var(--text);font-weight:600;border-color:rgba(201,218,243,.95);
+  box-shadow:0 -1px 0 #fff inset;
+}
+.tab .tname{overflow:hidden;text-overflow:ellipsis;}
+.tab .pop-tag{
+  flex:0 0 auto;font-size:9px;padding:0 4px;border-radius:4px;
+  background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-line);
+}
+.tab-close{
+  flex:0 0 auto;width:16px;height:16px;border:none;border-radius:8px;background:transparent;
+  color:var(--faint);display:flex;align-items:center;justify-content:center;transition:.15s;
+}
+.tab-close:hover{background:rgba(78,127,222,.10);color:var(--text);}
+
+/* ============ 内容区 ============ */
+.tabcontent{
+  flex:1 1 auto;min-height:0;background:#fff;border:1px solid var(--line);
+  border-radius:0 0 var(--r-lg) var(--r-lg);overflow:hidden;position:relative;
+}
+.page-scroll{height:100%;overflow-y:auto;}
+.progress{
+  position:absolute;left:0;top:0;height:2px;width:0;background:linear-gradient(90deg,var(--accent),#7FA6EC);
+  border-radius:0 2px 2px 0;transition:width .18s;z-index:5;opacity:0;
+}
+.progress.on{opacity:1;}
+
+/* 欢迎页 */
+.welcome{
+  height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:30px;
+}
+.welcome h2{font-size:21px;font-weight:600;letter-spacing:.4px;}
+.welcome-tip{font-size:12px;color:var(--sub);line-height:2.1;text-align:center;}
+.welcome-tip b{color:var(--text);}
+.welcome-actions{display:flex;gap:8px;margin-top:4px;}
+.welcome-actions .btn{width:auto;padding:0 16px;}
+
+/* ============ 模拟站点内容 ============ */
+.xhs-topnav{
+  height:52px;display:flex;align-items:center;gap:16px;padding:0 22px;
+  border-bottom:1px solid #F0F0F0;position:sticky;top:0;background:#fff;z-index:2;
+}
+.xhs-logo{color:var(--xhs);font-size:18px;font-weight:800;letter-spacing:1px;flex:0 0 auto;}
+.xhs-search{
+  flex:0 0 300px;height:34px;border-radius:20px;background:#F5F5F5;
+  display:flex;align-items:center;padding:0 14px;color:#999;font-size:12px;gap:6px;
+}
+.xhs-nav{display:flex;gap:22px;font-size:13px;color:#666;flex:1 1 auto;}
+.xhs-nav span{cursor:pointer;padding-bottom:2px;}
+.xhs-nav span.on{color:var(--text);font-weight:600;border-bottom:2px solid var(--xhs);}
+.xhs-nav span:hover{color:var(--text);}
+
+.xhs-feed{padding:16px 22px;column-count:4;column-gap:14px;}
+@media (max-width:1400px){.xhs-feed{column-count:3;}}
+.card{
+  break-inside:avoid;margin-bottom:14px;background:#fff;border-radius:10px;overflow:hidden;
+  border:1px solid #F0F0F0;cursor:pointer;transition:.18s;
+}
+.card:hover{box-shadow:0 6px 18px rgba(0,0,0,.10);transform:translateY(-1px);}
+.card-cover{width:100%;display:block;}
+.card-body{padding:8px 10px 10px;}
+.card-title{font-size:12.5px;line-height:1.5;color:#333;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.card-foot{display:flex;align-items:center;gap:6px;margin-top:8px;color:#999;font-size:11px;}
+.card-foot .av{width:18px;height:18px;border-radius:50%;flex:0 0 auto;}
+.card-foot .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:90px;}
+.card-foot .lk{margin-left:auto;display:flex;align-items:center;gap:3px;}
+
+/* 登录页 */
+.xhs-login{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;background:#FBFBFB;}
+.login-card{
+  display:flex;background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.08);
+  overflow:hidden;width:520px;max-width:100%;
+}
+.login-left{flex:0 0 220px;padding:22px;display:flex;flex-direction:column;align-items:center;gap:12px;background:#FAFAFA;}
+.qr{width:150px;height:150px;display:grid;grid-template-columns:repeat(21,1fr);grid-template-rows:repeat(21,1fr);background:#fff;padding:6px;border-radius:8px;}
+.qr i{display:block;}
+.qr i.b{background:#1B2536;}
+.login-left p{font-size:11.5px;color:#888;text-align:center;line-height:1.7;}
+.login-right{flex:1 1 auto;padding:22px 24px;}
+.login-tabs{display:flex;gap:18px;font-size:13px;color:#999;margin-bottom:16px;}
+.login-tabs span.on{color:var(--text);font-weight:600;border-bottom:2px solid var(--xhs);padding-bottom:4px;}
+.login-right input{width:100%;height:38px;border:1px solid #EBEBEB;border-radius:8px;padding:0 12px;outline:none;margin-bottom:10px;}
+.login-right input:focus{border-color:var(--xhs);}
+.login-row{display:flex;gap:8px;}
+.login-row input{flex:1;}
+.login-row button{flex:0 0 96px;height:38px;border:1px solid var(--xhs);background:#fff;color:var(--xhs);border-radius:8px;}
+.login-submit{width:100%;height:40px;border:none;border-radius:22px;background:var(--xhs);color:#fff;font-weight:600;margin-top:4px;}
+.login-agree{font-size:10.5px;color:#AAA;margin-top:12px;text-align:center;line-height:1.6;}
+.fake-login{
+  border:1px dashed var(--accent-line);background:var(--accent-soft);color:var(--accent);
+  padding:8px 16px;border-radius:10px;font-size:12px;display:flex;align-items:center;gap:6px;
+}
+.fake-login:hover{background:#DEE9FA;}
+
+/* 创作服务平台 */
+.cr-top{height:50px;display:flex;align-items:center;gap:18px;padding:0 20px;border-bottom:1px solid #F0F0F0;}
+.cr-logo{font-size:14px;font-weight:700;color:var(--xhs);}
+.cr-tabs{display:flex;gap:20px;font-size:13px;color:#666;margin-left:12px;}
+.cr-tabs span{cursor:pointer;padding-bottom:3px;}
+.cr-tabs span.on{color:var(--text);font-weight:600;border-bottom:2px solid var(--xhs);}
+.cr-body{display:flex;gap:18px;padding:18px 20px;}
+.cr-upload{
+  flex:0 0 300px;height:380px;border:1px dashed #DDD;border-radius:12px;background:#FAFAFA;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#AAA;
+}
+.cr-upload .thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px;width:100%;}
+.cr-upload .thumbs div{aspect-ratio:3/4;border-radius:6px;}
+.cr-form{flex:1 1 auto;display:flex;flex-direction:column;gap:10px;min-width:0;}
+.cr-form input.cr-title{height:44px;border:1px solid #EBEBEB;border-radius:10px;padding:0 14px;font-size:15px;outline:none;}
+.cr-form input.cr-title:focus{border-color:var(--xhs);}
+.cr-form textarea{
+  flex:1 1 auto;min-height:170px;border:1px solid #EBEBEB;border-radius:10px;padding:12px 14px;
+  resize:none;outline:none;line-height:1.8;color:#444;
+}
+.cr-form textarea:focus{border-color:var(--xhs);}
+.cr-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.chip{padding:4px 10px;border-radius:14px;background:var(--xhs-soft);color:var(--xhs);font-size:11px;}
+.cr-foot{display:flex;align-items:center;gap:10px;padding-top:4px;}
+.cr-foot .muted{color:#999;font-size:11.5px;}
+.xhs-red{
+  margin-left:auto;height:38px;padding:0 26px;border:none;border-radius:20px;
+  background:var(--xhs);color:#fff;font-weight:600;
+}
+.xhs-red:hover{background:#E01E39;}
+
+.cr-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.cr-table th{
+  text-align:left;font-weight:500;color:#999;font-size:11.5px;padding:10px 20px;border-bottom:1px solid #F0F0F0;background:#FAFAFA;
+}
+.cr-table td{padding:12px 20px;border-bottom:1px solid #F5F5F5;color:#444;}
+.cr-table tr:hover td{background:#FAFBFC;}
+.link{color:var(--accent);cursor:pointer;font-size:12px;}
+.link:hover{text-decoration:underline;}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10.5px;}
+.tag.on{background:#E8F6EF;color:var(--green);}
+.tag.off{background:#F5F5F5;color:#999;}
+
+/* 专业号/千帆/聚光 */
+.dash{padding:18px 22px;}
+.dash h4{font-size:14px;font-weight:600;margin-bottom:12px;}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.kpi{background:#FAFBFC;border:1px solid #F0F0F0;border-radius:12px;padding:14px 16px;}
+.kpi .k{font-size:11.5px;color:#999;}
+.kpi .v{font-size:22px;font-weight:700;margin-top:4px;}
+.kpi .d{font-size:11px;margin-top:3px;color:var(--green);}
+.kpi .d.down{color:#999;}
+.chart-box{background:#fff;border:1px solid #F0F0F0;border-radius:12px;padding:14px 16px;margin-bottom:16px;}
+
+/* 预留端口 */
+.reserved{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--disabled);}
+.reserved .box{border:1px dashed var(--line-hover);border-radius:14px;padding:34px 46px;text-align:center;line-height:2;}
+
+/* 笔记详情（弹窗页） */
+.note-detail{display:flex;height:100%;}
+.note-left{flex:0 0 58%;background:#111;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.note-left .ph{width:78%;aspect-ratio:3/4;border-radius:8px;}
+.note-right{flex:1 1 auto;padding:22px 24px;overflow-y:auto;min-width:0;}
+.note-author{display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid #F5F5F5;}
+.note-author .av{width:38px;height:38px;border-radius:50%;}
+.note-author .nm{font-size:13px;font-weight:600;}
+.note-author .fs{font-size:11px;color:#999;margin-top:2px;}
+.note-author .follow{margin-left:auto;height:30px;padding:0 16px;border:1px solid var(--xhs);color:var(--xhs);background:#fff;border-radius:16px;font-size:12px;}
+.note-body{padding:16px 0;font-size:13.5px;line-height:2;color:#333;}
+.note-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.note-time{font-size:11px;color:#AAA;margin-bottom:14px;}
+.note-actions{display:flex;gap:18px;padding:12px 0;border-top:1px solid #F5F5F5;border-bottom:1px solid #F5F5F5;color:#666;font-size:12px;}
+.note-actions span{display:flex;align-items:center;gap:5px;cursor:pointer;}
+.note-comments{padding-top:14px;}
+.note-comments h5{font-size:12px;color:#999;font-weight:500;margin-bottom:12px;}
+.cmt{display:flex;gap:10px;margin-bottom:14px;}
+.cmt .av{width:28px;height:28px;border-radius:50%;flex:0 0 auto;}
+.cmt .c-nm{font-size:11.5px;color:#999;}
+.cmt .c-tx{font-size:12.5px;color:#333;margin-top:3px;line-height:1.7;}
+
+/* 发布预览（弹窗页） */
+.pub-ok{height:100%;display:flex;gap:30px;align-items:center;justify-content:center;padding:26px;background:#FAFAFA;}
+.phone{
+  flex:0 0 260px;height:520px;border-radius:28px;background:#fff;
+  box-shadow:0 10px 34px rgba(0,0,0,.14);padding:14px;display:flex;flex-direction:column;gap:10px;
+}
+.phone .p-img{width:100%;aspect-ratio:3/4;border-radius:10px;}
+.phone .p-t{font-size:13px;font-weight:600;line-height:1.6;}
+.phone .p-x{font-size:11.5px;color:#666;line-height:1.8;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+.pub-info{max-width:340px;}
+.pub-info h3{font-size:20px;font-weight:700;margin-bottom:10px;}
+.pub-info p{font-size:13px;color:var(--sub);line-height:2;}
+.pub-info .btn{margin-top:16px;width:fit-content;padding:0 18px;}
+
+/* ============ 状态栏 ============ */
+.statusbar{
+  flex:0 0 26px;display:flex;align-items:center;gap:14px;padding:0 14px;
+  font-size:10.5px;color:var(--faint);border-top:1px solid var(--line-soft);
+}
+.statusbar .grow{flex:1 1 auto;}
+.bar{width:90px;height:3px;border-radius:2px;background:rgba(78,127,222,.14);overflow:hidden;}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#7FA6EC);transition:width .2s;}
+
+/* ============ 弹窗 / 模态 ============ */
+.overlay{
+  position:fixed;inset:0;background:rgba(27,37,54,.34);z-index:1000;
+  display:flex;align-items:center;justify-content:center;padding:24px;
+}
+.modal{
+  width:520px;max-width:100%;max-height:88vh;overflow-y:auto;background:#fff;border-radius:16px;
+  box-shadow:0 24px 60px rgba(27,37,54,.28);padding:20px;
+}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:14px;}
+.form-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.form-row label{flex:0 0 78px;text-align:right;color:var(--sub);font-size:12.5px;}
+.form-row input,.form-row select,.form-row textarea{
+  flex:1 1 auto;height:32px;border:1px solid var(--line);border-radius:8px;padding:0 10px;outline:none;color:var(--text);background:#fff;
+}
+.form-row textarea{height:64px;padding:8px 10px;resize:none;line-height:1.7;}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--accent);}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+.modal-foot .btn{width:auto;padding:0 20px;height:32px;}
+.perf-box{background:#F7FAFD;border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-top:6px;}
+.perf-box .hint{color:#8A97AC;font-size:11px;line-height:1.7;margin-top:6px;}
+.chk{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#33415C;}
+.chk .box{
+  width:16px;height:16px;border:1px solid var(--line-hover);border-radius:4px;background:#fff;
+  display:flex;align-items:center;justify-content:center;color:#fff;flex:0 0 auto;transition:.15s;
+}
+.chk .box svg{opacity:0;transition:.15s;}
+.chk.on .box{background:var(--accent);border-color:var(--accent);}
+.chk.on .box svg{opacity:1;}
+.modal-info{font-size:12px;color:var(--sub);line-height:2;background:#F7FAFD;border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:14px;}
+.toast-root{position:fixed;left:50%;bottom:56px;transform:translateX(-50%);z-index:1200;display:flex;flex-direction:column;gap:8px;align-items:center;}
+.toast{
+  background:rgba(27,37,54,.94);color:#fff;font-size:12.5px;padding:9px 18px;border-radius:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,.22);animation:tin .22s ease;max-width:70vw;line-height:1.6;
+}
+.toast.ok{background:rgba(47,124,88,.96);}
+.toast.info{background:rgba(78,127,222,.96);}
+@keyframes tin{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+/* ============ 导览 ============ */
+.tour-ring{position:fixed;z-index:1300;border-radius:16px;pointer-events:none;transition:all .28s ease;
+  box-shadow:0 0 0 3px var(--accent),0 0 0 9999px rgba(16,24,40,.46);}
+.tour-card{
+  position:fixed;z-index:1400;width:330px;background:#fff;border-radius:14px;padding:16px 18px;
+  box-shadow:0 20px 46px rgba(27,37,54,.28);
+}
+.tour-card .step{font-size:10.5px;color:var(--faint);letter-spacing:1px;}
+.tour-card h4{font-size:14.5px;font-weight:600;margin:5px 0 8px;}
+.tour-card p{font-size:12.5px;color:var(--sub);line-height:1.9;}
+.tour-card .foot{display:flex;align-items:center;gap:8px;margin-top:14px;}
+.tour-card .foot .btn{height:30px;width:auto;padding:0 14px;font-size:12px;}
+
+.intro-list{list-style:none;margin:12px 0 4px;}
+.intro-list li{display:flex;gap:9px;padding:7px 0;font-size:12.5px;color:var(--sub);line-height:1.7;border-bottom:1px dashed var(--line-soft);}
+.intro-list li:last-child{border-bottom:none;}
+.intro-list .n{flex:0 0 20px;height:20px;border-radius:6px;background:var(--accent-soft);color:var(--accent);
+  font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+.intro-list b{color:var(--text);}
+.fab{
+  position:fixed;right:22px;bottom:44px;z-index:900;height:38px;padding:0 16px;border-radius:20px;
+  border:1px solid var(--accent-line);background:#fff;color:var(--accent);font-size:12px;
+  display:flex;align-items:center;gap:6px;box-shadow:0 6px 18px rgba(27,37,54,.14);
+}
+.fab:hover{background:var(--accent-soft);}
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="app" id="app">
+    <!-- 标题栏 -->
+    <div class="titlebar" id="titlebar">
+      <div class="brand">
+        <div class="brand-mark">红</div>
+        <span class="win-title">小红书多账号管理</span>
+        <button class="demo-chip" id="chipDemo">静态演示原型 v6.6.0</button>
+      </div>
+      <div class="tb-sep"></div>
+      <div class="tb-nav">
+        <button class="iconbtn disabled" id="navBack" title="后退"></button>
+        <button class="iconbtn disabled" id="navFwd" title="前进"></button>
+        <button class="iconbtn" id="navReload" title="刷新"></button>
+        <button class="iconbtn disabled" id="navStop" title="停止"></button>
+      </div>
+      <div class="addr-wrap">
+        <div class="addr" id="addrBox">
+          <span class="lock" id="addrLock"></span>
+          <span class="txt" id="addrText">未打开页面</span>
+          <span class="sess" id="addrSess" style="display:none"></span>
+        </div>
+        <button class="iconbtn" id="navExt" title="用系统默认浏览器打开"></button>
+      </div>
+      <div class="winbtns">
+        <button class="winbtn" id="winMin" title="最小化"></button>
+        <button class="winbtn" id="winMax" title="最大化"></button>
+        <button class="winbtn close" id="winClose" title="关闭"></button>
+      </div>
+    </div>
+
+    <!-- 主体 -->
+    <div class="body">
+      <aside class="sidebar" id="sidebar"></aside>
+      <div class="main">
+        <div class="tabbar" id="tabbar"></div>
+        <div class="tabcontent" id="tabcontent">
+          <div class="progress" id="progress"></div>
+          <div class="page-scroll" id="pageScroll"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 状态栏 -->
+    <div class="statusbar">
+      <span id="stAcc">账号 0 / 20</span>
+      <span id="stTab">标签 0</span>
+      <span id="stSess"></span>
+      <span class="grow"></span>
+      <span id="stMsg">就绪</span>
+      <span class="bar"><i id="stBar"></i></span>
+    </div>
+  </div>
+</div>
+
+<button class="fab" id="fabTour">功能导览</button>
+<div id="modalRoot"></div>
+<div class="toast-root" id="toastRoot"></div>
+
+<script>
+/* ============================================================
+   小红书 PC 端多账号全域管理工具 · 静态交互演示
+   纯前端原型：UI 与交互复刻真实客户端，页面内容均为本地模拟。
+   ============================================================ */
+
+/* ---------- 图标 ---------- */
+const S = (d, sz) => '<svg width="' + (sz || 15) + '" height="' + (sz || 15) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>';
+const ICON = {
+  back: S('<path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>'),
+  fwd:  S('<path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>'),
+  reload: S('<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/>'),
+  stop: S('<rect x="6" y="6" width="12" height="12" rx="2"/>'),
+  ext:  S('<path d="M14 3h7v7"/><path d="M21 3l-9 9"/><path d="M18 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/>'),
+  min:  S('<path d="M5 12h14"/>'),
+  max:  S('<rect x="5" y="5" width="14" height="14" rx="2"/>'),
+  close: S('<path d="M18 6L6 18"/><path d="M6 6l12 12"/>'),
+  closeSm: S('<path d="M18 6L6 18"/><path d="M6 6l12 12"/>', 11),
+  chev: S('<path d="M9 6l6 6-6 6"/>', 13),
+  plus: S('<path d="M12 5v14"/><path d="M5 12h14"/>', 15),
+  gear: S('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 11.5 4a2 2 0 1 1 4 0 1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 22 11a2 2 0 1 1 0 4z"/>', 15),
+  search: S('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>', 13),
+  edit: S('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>', 12),
+  trash: S('<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/>', 12),
+  collapse: S('<path d="M15 6l-6 6 6 6"/>', 15),
+  expand: S('<path d="M9 6l6 6-6 6"/>', 15),
+  lock: S('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>', 12),
+  heart: S('<path d="M20.8 5.6a5.4 5.4 0 0 0-7.7 0L12 6.7l-1.1-1.1a5.4 5.4 0 0 0-7.7 7.7L12 21.5l8.8-8.2a5.4 5.4 0 0 0 0-7.7z"/>', 13),
+  star: S('<path d="M12 3l2.6 5.5 6 .9-4.3 4.2 1 6-5.3-2.8L6.7 19.6l1-6L3.4 9.4l6-.9z"/>', 13),
+  cmt: S('<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/>', 13),
+  compass: S('<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>', 14),
+  pen: S('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>', 14),
+  bag: S('<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a4 4 0 0 1 8 0v2"/>', 14),
+  grid: S('<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>', 14),
+  mega: S('<path d="M3 11v2a2 2 0 0 0 2 2h2l5 4V5L7 9H5a2 2 0 0 0-2 2z"/><path d="M18 8a4 4 0 0 1 0 8"/>', 14),
+  dots: S('<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>', 14),
+  users: S('<path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 20v-2a4 4 0 0 0-3-3.9"/>', 15),
+  check: S('<path d="M20 6L9 17l-5-5"/>', 11),
+  play: S('<path d="M6 4l14 8-14 8z"/>', 11),
+};
+
+/* ---------- 数据 ---------- */
+const BACKENDS = [
+  { key:'explore',  name:'兴趣社区',     url:'https://www.xiaohongshu.com/explore',                          desc:'浏览/发现页，日常内容观察',  icon:'compass' },
+  { key:'creator',  name:'创作服务平台', url:'https://creator.xiaohongshu.com/publish/publish?source=official', desc:'笔记发布/编辑',              icon:'pen'     },
+  { key:'pro',      name:'专业号后台',   url:'https://pro.xiaohongshu.com/login?redirectTo=%2Fenterprise%2Fhome', desc:'商家/账号资质运营',        icon:'bag'     },
+  { key:'ark',      name:'千帆PC端',     url:'https://ark.xiaohongshu.com/app-system/home?from=xhsweb',      desc:'内容矩阵/机构运营',          icon:'grid'    },
+  { key:'ad',       name:'聚光平台',     url:'https://ad.xiaohongshu.com/aurora/ad/manage/campaign',         desc:'广告投放/流量推广',          icon:'mega'    },
+  { key:'reserved', name:'预留拓展端口', url:'',                                                              desc:'在 backends.json 补充 url 即可启用', icon:'dots', reserved:true },
+];
+const STATUS_OPTIONS = ['正常','待养号','异常','停用'];
+const MAX_ACCOUNTS = 20;
+
+const state = {
+  accounts: [
+    { id:'a1', name:'广州公考-主号',  group:'广东·公考', track:'国省考',   owner:'小林',   status:'正常',   realname:'林某某', note:'地市轮值主号，日更 2 条', color:'#4E7FDE' },
+    { id:'a2', name:'茂名教师编-01',  group:'广东·教师', track:'教师招聘', owner:'阿May',  status:'正常',   realname:'',       note:'公告/考情方向，周二周五更新', color:'#E1251B' },
+    { id:'a3', name:'南网招聘-备用',  group:'广东·国企', track:'南方电网', owner:'陈工',   status:'待养号', realname:'',       note:'养号期，仅浏览互动', color:'#3F9B6D' },
+  ],
+  tabs: [],
+  activeTab: null,
+  collapsed: false,
+  selected: 'a1',
+  expanded: { a1:true },
+  logins: { 'a1:creator':true, 'a1:explore':true },
+  hardwareAccel: false,
+  filter: '',
+  seq: 1,
+};
+
+/* ---------- 工具 ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const beOf = key => BACKENDS.find(b => b.key === key) || BACKENDS[0];
+const accOf = id => state.accounts.find(a => a.id === id);
+const hueColor = (h, s, l) => 'hsl(' + h + ',' + s + '%,' + l + '%)';
+function grad(salt, h) {
+  const a = hueColor((h + salt * 37) % 360, 72, 84);
+  const b = hueColor((h + salt * 37 + 42) % 360, 68, 72);
+  return 'linear-gradient(135deg,' + a + ',' + b + ')';
+}
+
+function toast(msg, kind) {
+  const el = document.createElement('div');
+  el.className = 'toast' + (kind ? ' ' + kind : '');
+  el.textContent = msg;
+  $('toastRoot').appendChild(el);
+  setTimeout(() => { el.style.transition = '.25s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 260); }, 2600);
+}
+
+/* ---------- 侧栏 ---------- */
+function renderSidebar() {
+  const sb = $('sidebar');
+  if (state.collapsed) {
+    let h = '<div class="sb-col">';
+    state.accounts.forEach(a => {
+      h += '<button class="cbtn avatar' + (state.selected === a.id ? ' on' : '') + '" data-act="acc-pick" data-id="' + a.id +
+           '" title="' + esc(a.name) + '" style="background:' + a.color + ';color:#fff">' + esc(a.name.slice(0, 1)) + '</button>';
+    });
+    h += '<button class="cbtn red" data-act="new-account" title="新账号">' + ICON.plus + '</button>';
+    h += '<div class="spacer"></div>';
+    h += '<button class="cbtn ghost" data-act="expand" title="展开侧栏">' + ICON.expand + '</button>';
+    h += '<button class="cbtn ghost" data-act="settings" title="设置 / 备份">' + ICON.gear + '</button>';
+    h += '</div>';
+    sb.innerHTML = h;
+    sb.className = 'sidebar collapsed';
+    return;
+  }
+
+  const kw = state.filter.trim();
+  const list = state.accounts.filter(a =>
+    !kw || (a.name + a.group + a.track + a.owner).toLowerCase().indexOf(kw.toLowerCase()) >= 0);
+
+  let h = '';
+  h += '<div class="sb-header"><div class="sb-brand"><h3>账号工作台</h3><p>每账号独立会话 · 6 大官方 PC 后台</p></div></div>';
+  h += '<div class="sb-search">' + ICON.search +
+       '<input id="sbFilter" placeholder="搜索账号 / 分组 / 赛道" value="' + esc(state.filter) + '"></div>';
+  h += '<div class="sb-list">';
+  h += '<div class="sec-label"><span>账号列表</span><span>' + state.accounts.length + ' / ' + MAX_ACCOUNTS + '</span></div>';
+
+  if (!list.length) {
+    h += '<div style="padding:18px 10px;text-align:center;color:var(--faint);font-size:12px">没有匹配的账号</div>';
+  }
+  list.forEach(a => {
+    const open = !!state.expanded[a.id];
+    const sel = state.selected === a.id;
+    h += '<div class="acc-row' + (sel ? ' selected' : '') + (open ? ' expanded' : '') + '" data-act="acc-toggle" data-id="' + a.id + '">';
+    h += '<span class="acc-avatar" style="background:' + a.color + '">' + esc(a.name.slice(0, 1)) + '</span>';
+    h += '<span class="acc-meta"><span class="acc-name">' + esc(a.name) + '</span>' +
+         '<span class="acc-sub">' + esc(a.group || '未分组') + (a.track ? ' · ' + esc(a.track) : '') + ' · ' + esc(a.status) + '</span></span>';
+    h += '<span class="acc-actions">' +
+         '<button class="mini" data-act="acc-edit" data-id="' + a.id + '" title="编辑">' + ICON.edit + '</button>' +
+         '<button class="mini danger" data-act="acc-del" data-id="' + a.id + '" title="删除">' + ICON.trash + '</button></span>';
+    h += '<span class="acc-chev">' + ICON.chev + '</span>';
+    h += '</div>';
+    if (open) {
+      h += '<div class="plats">';
+      BACKENDS.forEach(b => {
+        const active = state.activeTab && state.tabs.find(t => t.id === state.activeTab) &&
+                       state.tabs.find(t => t.id === state.activeTab).accId === a.id &&
+                       state.tabs.find(t => t.id === state.activeTab).backendKey === b.key;
+        const logged = !!state.logins[a.id + ':' + b.key];
+        const dis = !!b.reserved;
+        h += '<div class="plat-row' + (active ? ' active' : '') + (dis ? ' disabled' : '') + '"' +
+             (dis ? '' : ' data-act="open" data-acc="' + a.id + '" data-key="' + b.key + '"') +
+             ' title="' + esc(b.desc) + '">';
+        h += '<span class="plat-ico">' + ICON[b.icon] + '</span><span>' + esc(b.name) + '</span>';
+        h += dis ? '<span class="dot-empty"></span>' : (logged ? '<span class="dot-login" title="已登录"></span>' : '<span class="dot-empty" title="未登录"></span>');
+        h += '</div>';
+      });
+      h += '</div>';
+    }
+  });
+  h += '</div>';
+  h += '<div class="sb-foot">';
+  h += '<button class="btn-new" data-act="new-account">' + ICON.plus + '新账号</button>';
+  h += '<button class="btn-ghost" data-act="settings" style="height:32px;border-radius:10px;width:100%;justify-content:center;display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;color:var(--sub)">' + ICON.gear + '设置 / 备份</button>';
+  h += '</div>';
+  sb.innerHTML = h;
+  sb.className = 'sidebar';
+}
+
+/* ---------- 标签栏 ---------- */
+function renderTabs() {
+  const tb = $('tabbar');
+  if (!state.tabs.length) { tb.innerHTML = ''; return; }
+  let h = '';
+  state.tabs.forEach(t => {
+    h += '<div class="tab' + (t.id === state.activeTab ? ' active' : '') + '" data-act="tab" data-id="' + t.id + '">';
+    if (t.kind === 'popup') h += '<span class="pop-tag">弹窗</span>';
+    h += '<span class="tname">' + esc(t.title) + '</span>';
+    h += '<button class="tab-close" data-act="tab-close" data-id="' + t.id + '" title="关闭">' + ICON.closeSm + '</button>';
+    h += '</div>';
+  });
+  tb.innerHTML = h;
+}
+
+/* ---------- 打开 / 关闭标签 ---------- */
+function openPlatform(accId, key) {
+  const be = beOf(key);
+  if (be.reserved) {
+    toast('该端口为预留位置：在 backends.json 补充 url 即可启用', 'info');
+    return;
+  }
+  const exist = state.tabs.find(t => t.accId === accId && t.backendKey === key && t.kind === 'platform');
+  if (exist) { state.activeTab = exist.id; refresh(); return; }
+  const a = accOf(accId);
+  const tab = {
+    id: 't' + (state.seq++), accId, backendKey: key, kind: 'platform',
+    title: a.name + ' · ' + be.name, view: 'main', sub: null, data: null,
+  };
+  state.tabs.push(tab);
+  state.selected = accId;
+  state.expanded[accId] = true;
+  state.activeTab = tab.id;
+  refresh();
+  loadProgress();
+  if (!state.logins[accId + ':' + key]) {
+    toast('该账号在此平台尚未登录 · 登录态按账号独立保存', 'info');
+  }
+}
+
+function openPopup(accId, view, title, data) {
+  const a = accOf(accId);
+  const tab = {
+    id: 't' + (state.seq++), accId, backendKey: (data && data.key) || null, kind: 'popup',
+    title: a.name + ' · ' + title, view, sub: null, data: data || null,
+  };
+  state.tabs.push(tab);
+  state.activeTab = tab.id;
+  refresh();
+  loadProgress();
+  toast('已捕获 window.open 弹窗 → 转为工具内新标签页（继承当前账号会话）', 'ok');
+}
+
+function closeTab(id) {
+  const i = state.tabs.findIndex(t => t.id === id);
+  if (i < 0) return;
+  state.tabs.splice(i, 1);
+  if (state.activeTab === id) {
+    state.activeTab = state.tabs.length ? state.tabs[Math.max(0, i - 1)].id : null;
+  }
+  refresh();
+}
+
+/* ---------- 进度条 ---------- */
+function loadProgress() {
+  const p = $('progress'), bar = $('stBar');
+  p.classList.add('on');
+  let v = 0;
+  clearInterval(window.__pg);
+  window.__pg = setInterval(() => {
+    v = Math.min(100, v + 18);
+    p.style.width = v + '%';
+    bar.style.width = v + '%';
+    if (v >= 100) {
+      clearInterval(window.__pg);
+      setTimeout(() => { p.classList.remove('on'); p.style.width = '0'; bar.style.width = '0'; }, 320);
+    }
+  }, 55);
+}
+
+/* ---------- 内容渲染 ---------- */
+function renderContent() {
+  const box = $('pageScroll');
+  const tab = state.tabs.find(t => t.id === state.activeTab);
+
+  if (!tab) {
+    box.innerHTML =
+      '<div class="welcome"><h2>多账号集中管理</h2>' +
+      '<div class="welcome-tip">' +
+      '1. 左下角「+ 新账号」添加账号<br>' +
+      '2. 左侧展开账号，点击要使用的<b>平台</b><br>' +
+      '3. 在打开的标签页中<b>手动登录</b>，登录态按账号独立保存<br>' +
+      '4. 切换账号/平台会<b>保留已打开的标签页</b>，需手动关闭' +
+      '</div>' +
+      '<div class="welcome-actions">' +
+      '<button class="btn-primary" data-act="new-account">' + ICON.plus + '添加账号</button>' +
+      '<button class="btn" data-act="tour">' + ICON.play + '功能导览</button>' +
+      '</div></div>';
+    return;
+  }
+
+  const key = tab.backendKey || (tab.data && tab.data.key) || 'explore';
+  const needLogin = tab.kind === 'platform' && !state.logins[tab.accId + ':' + key];
+  if (needLogin) { box.innerHTML = loginPage(tab); renderQR(); return; }
+
+  if (tab.view === 'note')     { box.innerHTML = notePage(tab); return; }
+  if (tab.view === 'publish')  { box.innerHTML = publishPage(tab); return; }
+
+  switch (key) {
+    case 'explore': box.innerHTML = explorePage(tab); break;
+    case 'creator': box.innerHTML = creatorPage(tab); break;
+    case 'pro':     box.innerHTML = proPage(tab);     break;
+    case 'ark':     box.innerHTML = arkPage(tab);     break;
+    case 'ad':      box.innerHTML = adPage(tab);      break;
+    default:        box.innerHTML = reservedPage();   break;
+  }
+}
+
+function renderQR() {
+  const q = document.querySelector('.qr');
+  if (!q) return;
+  let h = '';
+  for (let i = 0; i < 21 * 21; i++) h += '<i class="' + (Math.random() > 0.52 ? 'b' : '') + '"></i>';
+  q.innerHTML = h;
+}
+
+function loginPage(tab) {
+  const a = accOf(tab.accId), be = beOf(tab.backendKey);
+  return '<div class="xhs-login">' +
+    '<div class="login-card">' +
+      '<div class="login-left"><div class="qr"></div>' +
+        '<p>打开小红书 App 扫码登录<br><span style="color:#BBB">当前：' + esc(a.name) + ' · ' + esc(be.name) + '</span></p></div>' +
+      '<div class="login-right">' +
+        '<div class="login-tabs"><span class="on">验证码登录</span><span>密码登录</span></div>' +
+        '<input placeholder="手机号" disabled>' +
+        '<div class="login-row"><input placeholder="验证码" disabled><button>获取验证码</button></div>' +
+        '<button class="login-submit">登 录</button>' +
+        '<div class="login-agree">登录即代表同意《用户协议》《隐私政策》</div>' +
+      '</div>' +
+    '</div>' +
+    '<button class="fake-login" data-act="fake-login" data-acc="' + tab.accId + '" data-key="' + tab.backendKey + '">' +
+      ICON.play + '演示：模拟扫码登录（真实工具内需人工扫码）</button>' +
+    '</div>';
+}
+
+const FEED = [
+  { t:'2026 广东省考公告解读｜报名全流程一次看懂', a:'广州中公教育', l:'1.2万' },
+  { t:'国考行测申论 90 天冲刺计划表（可保存）',     a:'公考小助手',   l:'8634' },
+  { t:'教师编上岸经验：非师范一次性过笔试面试',     a:'茂名考编菌',   l:'5421' },
+  { t:'南方电网笔试考什么？历年题型整理',           a:'南网求职圈',   l:'3987' },
+  { t:'三支一扶待遇盘点｜广东各地市对比',           a:'基层就业指南', l:'2765' },
+  { t:'事业单位公基高频考点 300 条',                a:'事考资料库',   l:'6543' },
+  { t:'面试逆袭 8 分，我是这样练的',                a:'上岸学姐阿May', l:'9021' },
+  { t:'省考岗位怎么选？三步避开万人坑',             a:'广东公考通',   l:'4412' },
+  { t:'考编人作息表｜白天上班晚上刷题',             a:'自律打卡日记', l:'3188' },
+  { t:'结构化面试万能开头，背这 5 句',              a:'面试研究所',   l:'7760' },
+  { t:'广东各地市教师招聘时间轴（收藏版）',         a:'教师招聘网',   l:'2290' },
+  { t:'错题本这样做，行测提分 15+',                 a:'行测刷题组',   l:'5108' },
+];
+
+function explorePage(tab) {
+  const hue = state.accounts.findIndex(a => a.id === tab.accId) * 90 + 200;
+  let cards = '';
+  FEED.forEach((n, i) => {
+    const hh = 150 + (i % 4) * 42;
+    cards += '<div class="card" data-act="open-note" data-i="' + i + '">' +
+      '<div class="card-cover" style="height:' + hh + 'px;background:' + grad(i, hue) + '"></div>' +
+      '<div class="card-body"><div class="card-title">' + esc(n.t) + '</div>' +
+      '<div class="card-foot"><span class="av" style="background:' + hueColor((hue + i * 29) % 360, 60, 62) + '"></span>' +
+      '<span class="nm">' + esc(n.a) + '</span>' +
+      '<span class="lk">' + ICON.heart + esc(n.l) + '</span></div></div></div>';
+  });
+  return '<div class="xhs-topnav">' +
+    '<span class="xhs-logo">小红书</span>' +
+    '<span class="xhs-search">' + ICON.search + '搜索小红书</span>' +
+    '<span class="xhs-nav"><span class="on">发现</span><span>关注</span><span>视频</span><span>图文</span></span>' +
+    '</div>' +
+    '<div class="xhs-feed">' + cards + '</div>';
+}
+
+function creatorPage(tab) {
+  const sub = tab.sub || 'publish';
+  let body = '';
+  if (sub === 'publish') {
+    let th = '';
+    for (let i = 0; i < 6; i++) th += '<div style="background:' + grad(i + 3, 320) + '"></div>';
+    body = '<div class="cr-body">' +
+      '<div class="cr-upload"><div style="font-size:26px;color:#CCC">+</div>' +
+        '<div style="font-size:12px">拖拽或点击上传图片</div>' +
+        '<div class="thumbs">' + th + '</div></div>' +
+      '<div class="cr-form">' +
+        '<input class="cr-title" placeholder="填写标题会有更多赞哦～" value="2026 广东省考公告解读｜报名全流程一次看懂">' +
+        '<textarea>报名时间为 7 月 22 日—7 月 28 日，笔试初定 8 月 1 日。\n\n本次共招录 84 人（事业编），岗位覆盖语文、数学、英语、幼教等学科，应往届均可报考。\n\n完整岗位表与报名入口已整理在评论区，需要的同学自取～</textarea>' +
+        '<div class="cr-chips"><span class="chip">#广东省考</span><span class="chip">#教师招聘</span><span class="chip">#考公考编</span></div>' +
+        '<div class="cr-foot"><span class="muted">可见范围：公开 · 定时发布：关闭</span>' +
+        '<button class="xhs-red" data-act="publish">发布</button></div>' +
+      '</div></div>';
+  } else {
+    const rows = [
+      ['2026 广东省考公告解读｜报名全流程', '07-22 10:12', '1.2万', '已发布'],
+      ['教师编面试逆袭 8 分经验贴', '07-19 19:40', '9,021', '已发布'],
+      ['南网笔试历年题型整理', '07-15 09:05', '3,987', '已发布'],
+      ['三支一扶各地市待遇盘点', '07-11 16:22', '2,765', '仅自己可见'],
+      ['公基高频考点 300 条', '07-08 20:31', '6,543', '已发布'],
+    ];
+    body = '<table class="cr-table"><thead><tr><th>笔记标题</th><th>发布时间</th><th>浏览</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+    rows.forEach((r, i) => {
+      body += '<tr><td>' + esc(r[0]) + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td>' +
+        '<td><span class="tag ' + (r[3] === '已发布' ? 'on' : 'off') + '">' + r[3] + '</span></td>' +
+        '<td><span class="link" data-act="manage-view" data-i="' + i + '">查看</span></td></tr>';
+    });
+    body += '</tbody></table>';
+  }
+  return '<div class="cr-top"><span class="cr-logo">创作服务平台</span>' +
+    '<span class="cr-tabs">' +
+      '<span class="' + (sub === 'publish' ? 'on' : '') + '" data-act="cr-sub" data-sub="publish">发布笔记</span>' +
+      '<span class="' + (sub === 'manage' ? 'on' : '') + '" data-act="cr-sub" data-sub="manage">笔记管理</span>' +
+    '</span></div>' + body;
+}
+
+function sparkline(vals, w, h) {
+  const max = Math.max.apply(null, vals), min = Math.min.apply(null, vals);
+  const pts = vals.map((v, i) => {
+    const x = (i / (vals.length - 1)) * (w - 20) + 10;
+    const y = h - 14 - ((v - min) / (max - min || 1)) * (h - 34);
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  });
+  const area = 'M10,' + (h - 14) + ' L' + pts.join(' L') + ' L' + (w - 10) + ',' + (h - 14) + ' Z';
+  return '<svg width="100%" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' +
+    '<defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#4E7FDE" stop-opacity=".28"/><stop offset="1" stop-color="#4E7FDE" stop-opacity="0"/></linearGradient></defs>' +
+    '<path d="' + area + '" fill="url(#g1)"/>' +
+    '<polyline points="' + pts.join(' ') + '" fill="none" stroke="#4E7FDE" stroke-width="2" stroke-linejoin="round"/>' +
+    '</svg>';
+}
+
+function proPage(tab) {
+  const vals = [820, 960, 1120, 1040, 1380, 1620, 1510, 1780, 1960, 2140, 2050, 2380];
+  return '<div class="dash"><h4>数据概览</h4>' +
+    '<div class="kpis">' +
+      '<div class="kpi"><div class="k">近 7 天浏览</div><div class="v">2.38 万</div><div class="d">+18.6%</div></div>' +
+      '<div class="kpi"><div class="k">互动量（赞+藏+评）</div><div class="v">1,864</div><div class="d">+9.2%</div></div>' +
+      '<div class="kpi"><div class="k">新增粉丝</div><div class="v">327</div><div class="d">+4.1%</div></div>' +
+      '<div class="kpi"><div class="k">笔记数</div><div class="v">86</div><div class="d down">本月 +12</div></div>' +
+    '</div>' +
+    '<div class="chart-box"><div style="font-size:12px;color:#999;margin-bottom:6px">近 12 周浏览趋势</div>' +
+      sparkline(vals, 800, 150) + '</div>' +
+    '<div class="chart-box"><div style="font-size:12px;color:#999;margin-bottom:10px">最近发布</div>' +
+      '<table class="cr-table"><thead><tr><th>笔记</th><th>浏览</th><th>互动</th><th>涨粉</th></tr></thead><tbody>' +
+      '<tr><td>2026 广东省考公告解读｜报名全流程</td><td>12,018</td><td>1,024</td><td>86</td></tr>' +
+      '<tr><td>教师编面试逆袭 8 分经验贴</td><td>9,021</td><td>902</td><td>71</td></tr>' +
+      '<tr><td>南网笔试历年题型整理</td><td>3,987</td><td>341</td><td>28</td></tr>' +
+      '</tbody></table></div>' +
+    '</div>';
+}
+
+function arkPage(tab) {
+  const rows = [
+    ['广州公考-主号', '林某某', '3.2 万', '86', '正常'],
+    ['茂名教师编-01', '—', '1.8 万', '54', '正常'],
+    ['南网招聘-备用', '—', '2,410', '12', '待养号'],
+    ['深圳事考-主号', '—', '9,860', '31', '正常'],
+    ['佛山教招-02', '—', '6,204', '27', '正常'],
+  ];
+  let body = '<table class="cr-table"><thead><tr><th>账号</th><th>实名/主体</th><th>粉丝</th><th>近 30 天笔记</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    body += '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td>' +
+      '<td><span class="tag ' + (r[4] === '正常' ? 'on' : 'off') + '">' + r[4] + '</span></td>' +
+      '<td><span class="link" data-act="toast" data-msg="演示环境：此处仅展示矩阵视图">进入</span></td></tr>';
+  });
+  return '<div class="dash"><h4>内容矩阵</h4><div class="chart-box" style="padding:0">' + body + '</tbody></table></div></div>';
+}
+
+function adPage(tab) {
+  const rows = [
+    ['省考冲刺-信息流', '投放中', '¥ 1,860', '12.4 万', '¥ 0.15', '3.8%'],
+    ['教师编-搜索广告', '投放中', '¥ 942',  '5.1 万',  '¥ 0.18', '4.6%'],
+    ['南网-笔记推广',   '已暂停', '¥ 0',    '0',       '—',      '—'],
+  ];
+  let body = '<table class="cr-table"><thead><tr><th>计划名称</th><th>状态</th><th>今日消耗</th><th>曝光</th><th>平均点击成本</th><th>互动率</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    body += '<tr><td>' + esc(r[0]) + '</td><td><span class="tag ' + (r[1] === '投放中' ? 'on' : 'off') + '">' + r[1] + '</span></td>' +
+      '<td>' + r[2] + '</td><td>' + r[3] + '</td><td>' + r[4] + '</td><td>' + r[5] + '</td></tr>';
+  });
+  const bars = [46, 62, 38, 74, 55, 88, 70];
+  let barHtml = '<div style="display:flex;align-items:flex-end;gap:12px;height:110px;padding-top:10px">';
+  bars.forEach((b, i) => {
+    barHtml += '<div style="flex:1;height:' + b + '%;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#7FA6EC,#4E7FDE)"></div>';
+  });
+  barHtml += '</div>';
+  return '<div class="dash"><h4>推广概览</h4>' +
+    '<div class="kpis">' +
+      '<div class="kpi"><div class="k">今日消耗</div><div class="v">¥ 2,802</div><div class="d">预算 5,000</div></div>' +
+      '<div class="kpi"><div class="k">曝光量</div><div class="v">17.5 万</div><div class="d">+12.4%</div></div>' +
+      '<div class="kpi"><div class="k">点击率</div><div class="v">4.1%</div><div class="d">+0.6pt</div></div>' +
+      '<div class="kpi"><div class="k">平均点击成本</div><div class="v">¥ 0.16</div><div class="d down">-¥0.02</div></div>' +
+    '</div>' +
+    '<div class="chart-box"><div style="font-size:12px;color:#999;margin-bottom:6px">近 7 日消耗趋势</div>' + barHtml + '</div>' +
+    '<div class="chart-box" style="padding:0">' + body + '</tbody></table></div></div>';
+}
+
+function reservedPage() {
+  return '<div class="reserved"><div class="box">' +
+    '<div style="font-size:15px;font-weight:600;color:var(--sub)">预留拓展端口</div>' +
+    '<div style="font-size:12px">后续新增官方 PC 运营后台的接入位<br>在 src/assets/backends.json 中补充 url 即可启用，无需改代码</div>' +
+    '</div></div>';
+}
+
+function notePage(tab) {
+  const n = FEED[tab.data.i] || FEED[0];
+  const hue = 210 + tab.data.i * 27;
+  const cmts = [
+    ['爱学习的阿May', '整理得太全了，已收藏！'],
+    ['考编小分队', '请问公告链接能发一下吗？'],
+    ['夜跑的鱼', '去年就是看这个上岸的，感谢！'],
+  ];
+  let ch = '';
+  cmts.forEach((c, i) => {
+    ch += '<div class="cmt"><span class="av" style="background:' + hueColor((hue + i * 60) % 360, 60, 62) + '"></span>' +
+      '<div><div class="c-nm">' + esc(c[0]) + '</div><div class="c-tx">' + esc(c[1]) + '</div></div></div>';
+  });
+  return '<div class="note-detail">' +
+    '<div class="note-left"><div class="ph" style="background:' + grad(tab.data.i, hue) + '"></div></div>' +
+    '<div class="note-right">' +
+      '<div class="note-author"><span class="av" style="background:' + hueColor(hue % 360, 60, 62) + ';width:38px;height:38px;border-radius:50%"></span>' +
+        '<div><div class="nm">' + esc(n.a) + '</div><div class="fs">粉丝 3.2 万 · 笔记 86</div></div>' +
+        '<button class="follow">关注</button></div>' +
+      '<div class="note-body">' +
+        '<div style="font-size:16px;font-weight:600;margin-bottom:10px;line-height:1.6">' + esc(n.t) + '</div>' +
+        '<p>报名时间为 7 月 22 日—7 月 28 日，笔试初定 8 月 1 日。</p>' +
+        '<p>本次共招录 84 人（事业编），岗位覆盖语文、数学、英语、幼教等学科，应往届均可报考。</p>' +
+        '<p>完整岗位表与报名入口已整理在评论区，需要的同学自取～</p></div>' +
+      '<div class="note-tags"><span class="chip">#广东省考</span><span class="chip">#教师招聘</span><span class="chip">#考公考编</span></div>' +
+      '<div class="note-time">编辑于 07-22 · 广东</div>' +
+      '<div class="note-actions"><span>' + ICON.heart + ' ' + esc(n.l) + '</span><span>' + ICON.star + ' 8,241</span><span>' + ICON.cmt + ' 1,024</span></div>' +
+      '<div class="note-comments"><h5>共 1,024 条评论</h5>' + ch + '</div>' +
+    '</div></div>';
+}
+
+function publishPage(tab) {
+  return '<div class="pub-ok">' +
+    '<div class="phone"><div class="p-img" style="background:' + grad(3, 320) + '"></div>' +
+      '<div class="p-t">2026 广东省考公告解读｜报名全流程一次看懂</div>' +
+      '<div class="p-x">报名时间为 7 月 22 日—7 月 28 日，笔试初定 8 月 1 日。本次共招录 84 人（事业编）…</div></div>' +
+    '<div class="pub-info"><h3>发布成功</h3>' +
+      '<p>笔记已提交，审核通过后将展示在个人主页。<br><br>' +
+      '这一步在真实工具里是<b>人工点击发布</b>完成的：本工具不提供任何自动发布、批量托管或抓取能力，' +
+      '只是把多账号的后台集中在一个窗口里，让你手动操作。</p>' +
+      '<button class="btn" data-act="toast" data-msg="演示环境：真实工具内可继续编辑或删除该笔记">继续编辑</button>' +
+    '</div></div>';
+}
+
+/* ---------- 状态栏 / 地址栏 ---------- */
+function refresh() {
+  renderSidebar();
+  renderTabs();
+  renderContent();
+  const tab = state.tabs.find(t => t.id === state.activeTab);
+  const a = tab ? accOf(tab.accId) : null;
+
+  $('addrText').textContent = tab
+    ? ((tab.kind === 'popup' ? '新标签页 · ' : '') + (beOf(tab.backendKey || (tab.data && tab.data.key) || 'explore').url || '—'))
+    : '未打开页面';
+  $('addrLock').innerHTML = tab ? ICON.lock : '';
+  const sess = $('addrSess');
+  if (a) { sess.style.display = ''; sess.textContent = a.name + ' · 独立 Cookie 会话'; }
+  else sess.style.display = 'none';
+
+  $('stAcc').textContent = '账号 ' + state.accounts.length + ' / ' + MAX_ACCOUNTS;
+  $('stTab').textContent = '标签 ' + state.tabs.length;
+  $('stSess').textContent = a ? '当前会话：' + a.name : '';
+  $('stMsg').textContent = tab ? (tab.kind === 'popup' ? '弹窗已捕获为标签页' : '就绪') : '就绪';
+
+  const disabled = !tab;
+  ['navBack', 'navFwd', 'navStop'].forEach(id => $(id).classList.toggle('disabled', disabled));
+  $('navReload').classList.toggle('disabled', disabled);
+  $('navExt').classList.toggle('disabled', disabled);
+}
+
+/* ---------- 弹窗 / 对话框 ---------- */
+function openModal(html) {
+  closeModal();
+  const o = document.createElement('div');
+  o.className = 'overlay';
+  o.id = 'overlay';
+  o.innerHTML = html;
+  o.addEventListener('click', e => { if (e.target === o) closeModal(); });
+  $('modalRoot').appendChild(o);
+}
+function closeModal() {
+  const o = $('overlay');
+  if (o) o.remove();
+}
+
+function accountDialog(acc) {
+  const a = acc || { name:'', group:'', track:'', owner:'', status:'正常', realname:'', note:'' };
+  const opts = STATUS_OPTIONS.map(s => '<option' + (a.status === s ? ' selected' : '') + '>' + s + '</option>').join('');
+  openModal('<div class="modal">' +
+    '<h3>' + (acc ? '编辑账号' : '新增账号') + '</h3>' +
+    '<div class="form-row"><label>账号名称 *</label><input id="fName" value="' + esc(a.name) + '" placeholder="例如：广州公考-主号"></div>' +
+    '<div class="form-row"><label>分组</label><input id="fGroup" value="' + esc(a.group) + '" placeholder="例如：广东·公考"></div>' +
+    '<div class="form-row"><label>赛道</label><input id="fTrack" value="' + esc(a.track) + '" placeholder="例如：国省考"></div>' +
+    '<div class="form-row"><label>负责人</label><input id="fOwner" value="' + esc(a.owner) + '"></div>' +
+    '<div class="form-row"><label>状态</label><select id="fStatus">' + opts + '</select></div>' +
+    '<div class="form-row"><label>实名信息</label><input id="fReal" value="' + esc(a.realname) + '" placeholder="同实名/同主体关联标记（选填）"></div>' +
+    '<div class="form-row"><label>备注</label><textarea id="fNote">' + esc(a.note) + '</textarea></div>' +
+    '<div class="modal-foot">' +
+      '<button class="btn btn-ghost" data-act="modal-close" style="width:auto;padding:0 20px;height:32px">取消</button>' +
+      '<button class="btn-primary" data-act="acc-save" data-id="' + (acc ? acc.id : '') + '" style="width:auto;padding:0 20px;height:32px">保存</button>' +
+    '</div></div>');
+}
+
+function settingsDialog() {
+  const acc = state.accounts.length;
+  openModal('<div class="modal">' +
+    '<h3>设置 / 备份</h3>' +
+    '<div class="modal-info">版本：v6.6.0　账号：' + acc + ' / ' + MAX_ACCOUNTS + '<br>' +
+      '数据目录：%APPDATA%\\XHSManager<br>' +
+      '浏览器配置目录：%APPDATA%\\XHSManager\\profiles</div>' +
+    '<div style="display:flex;flex-direction:column;gap:8px">' +
+      '<button class="btn" data-act="do-backup">立即备份数据（JSON）</button>' +
+      '<button class="btn" data-act="do-export">导出账号台账到…</button>' +
+      '<button class="btn" data-act="do-import">从 JSON 导入（覆盖本地，自动备份原数据）</button>' +
+      '<button class="btn" data-act="do-dir">打开数据目录</button>' +
+    '</div>' +
+    '<div class="perf-box">' +
+      '<div class="chk' + (state.hardwareAccel ? ' on' : '') + '" id="chkGpu"><span class="box">' + ICON.check + '</span>' +
+        '<span>启用硬件加速（GPU 渲染）</span></div>' +
+      '<div class="hint">默认关闭＝软件渲染，兼容所有机器。若本机有独立显卡且网页滚动偏卡，可勾选此项；若开启后出现白屏、闪退或打不开，请取消勾选。</div>' +
+      '<div class="hint" id="gpuReco">未检测到独立显卡（或为核显 / 远程桌面），默认走软件渲染以保证稳定打开。</div>' +
+      '<div class="hint" id="gpuState" style="color:var(--accent)"></div>' +
+    '</div>' +
+    '<div class="modal-foot"><button class="btn" data-act="modal-close" style="width:auto;padding:0 20px;height:32px">关闭</button></div>' +
+    '</div>');
+}
+
+function confirmDialog(title, text, onYes) {
+  openModal('<div class="modal" style="width:400px">' +
+    '<h3>' + esc(title) + '</h3>' +
+    '<div style="font-size:13px;color:var(--sub);line-height:1.9">' + text + '</div>' +
+    '<div class="modal-foot">' +
+      '<button class="btn btn-ghost" data-act="modal-close" style="width:auto;padding:0 20px;height:32px">取消</button>' +
+      '<button class="btn-primary" id="cfmYes" style="width:auto;padding:0 20px;height:32px">确定</button>' +
+    '</div></div>');
+  $('cfmYes').onclick = () => { closeModal(); onYes(); };
+}
+
+function introDialog() {
+  openModal('<div class="modal" style="width:520px">' +
+    '<h3>小红书 PC 端多账号全域管理工具</h3>' +
+    '<div style="font-size:12.5px;color:var(--sub);line-height:1.9">' +
+      '这是一个<b>静态交互演示原型</b>：界面与操作逻辑 1:1 复刻客户端，页面内容由本地模拟生成，' +
+      '不涉及任何真实网络请求与账号数据。' +
+    '</div>' +
+    '<ul class="intro-list">' +
+      '<li><span class="n">1</span><div><b>多账号集中管理</b>：每账号独立 Cookie 会话，同账号 6 大官方后台一次登录互通，账号之间完全隔离防串号。</div></li>' +
+      '<li><span class="n">2</span><div><b>内嵌 Chromium 真实渲染</b>：不是截图，登录与发布全部人工完成，零自动化、零抓取。</div></li>' +
+      '<li><span class="n">3</span><div><b>弹窗自动捕获</b>：站内 target=_blank / window.open 会转为工具内新标签页，不再点了没反应。</div></li>' +
+      '<li><span class="n">4</span><div><b>稳如老机器</b>：实色渲染 + 后台标签冻结 + 软件渲染兜底 + 显卡自动探测与崩溃回退。</div></li>' +
+    '</ul>' +
+    '<div class="modal-foot">' +
+      '<button class="btn btn-ghost" data-act="modal-close" style="width:auto;padding:0 20px;height:32px">直接体验</button>' +
+      '<button class="btn-primary" data-act="tour" style="width:auto;padding:0 20px;height:32px">' + ICON.play + '开始功能导览</button>' +
+    '</div></div>');
+}
+
+/* ---------- 功能导览 ---------- */
+const TOUR = [
+  { sel:'#titlebar',  t:'一体化标题栏 · 导航置顶',
+    d:'后退 / 前进 / 刷新 / 停止与地址栏并入标题栏，贯穿整窗，网页可视高度最大化。地址栏右侧显示当前账号的独立会话标识。' },
+  { sel:'#sidebar',   t:'多账号集中管理',
+    d:'每个账号独立展开 6 大官方 PC 后台：兴趣社区、创作服务平台、专业号后台、千帆 PC 端、聚光平台，以及一个预留拓展端口（补 url 即可启用）。账号之间 Cookie 完全隔离，互不串号。' },
+  { sel:'#tabbar',    t:'多标签并行保留',
+    d:'切换账号 / 平台不会关闭已打开的标签页，可多账号同时在线；后台标签自动冻结以节省 CPU，× 为细线柔和关闭按钮。' },
+  { sel:'#tabcontent',t:'内嵌 Chromium · 弹窗捕获',
+    d:'这里是真实网页渲染，不是截图。点击内容区里的笔记卡片、或「创作服务平台 → 发布」，原本会丢失的弹窗会被捕获成新标签页（标签上带「弹窗」角标），并继承当前账号会话。' },
+  { sel:'#sidebar',   t:'账号增删改 · 设置备份',
+    d:'悬停账号行可编辑 / 删除；「+ 新账号」录入名称、分组、赛道、负责人、状态、实名与备注。设置里可做 JSON 备份 / 导出导入，并开关硬件加速。' },
+  { sel:'.statusbar', t:'状态栏 · 会话与容量',
+    d:'实时显示账号数（上限 20）、已打开标签数、当前会话账号与加载进度，切换页面时可直观看到归属哪个账号。' },
+];
+
+function startTour() {
+  closeModal();
+  let i = 0;
+  const layer = document.createElement('div');
+  layer.id = 'tourLayer';
+  layer.innerHTML = '<div class="tour-ring" id="tourRing"></div>' +
+    '<div class="tour-card" id="tourCard"></div>';
+  document.body.appendChild(layer);
+
+  function place() {
+    const step = TOUR[i];
+    const el = document.querySelector(step.sel);
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const ring = $('tourRing');
+    ring.style.left = (r.left - 6) + 'px';
+    ring.style.top = (r.top - 6) + 'px';
+    ring.style.width = (r.width + 12) + 'px';
+    ring.style.height = (r.height + 12) + 'px';
+    const card = $('tourCard');
+    card.innerHTML =
+      '<div class="step">功能导览 ' + (i + 1) + ' / ' + TOUR.length + '</div>' +
+      '<h4>' + step.t + '</h4><p>' + step.d + '</p>' +
+      '<div class="foot">' +
+        '<button class="btn btn-ghost" id="tourPrev">上一步</button>' +
+        '<button class="btn-primary" id="tourNext">' + (i === TOUR.length - 1 ? '完成' : '下一步') + '</button>' +
+        '<span style="margin-left:auto;font-size:11px;color:var(--faint)">' + (i + 1) + '/' + TOUR.length + '</span>' +
+      '</div>';
+    const cw = 330, ch = card.offsetHeight || 190;
+    let top = r.bottom + 14;
+    if (top + ch > window.innerHeight - 12) top = Math.max(12, r.top - ch - 14);
+    let left = Math.min(Math.max(12, r.left), window.innerWidth - cw - 12);
+    card.style.top = top + 'px';
+    card.style.left = left + 'px';
+    $('tourPrev').disabled = i === 0;
+    $('tourPrev').style.opacity = i === 0 ? '.45' : '1';
+    $('tourNext').onclick = () => {
+      if (i === TOUR.length - 1) endTour();
+      else { i++; place(); }
+    };
+    $('tourPrev').onclick = () => { if (i > 0) { i--; place(); } };
+  }
+  window.endTour = function () { layer.remove(); };
+  window.addEventListener('resize', place);
+  place();
+}
+function endTour() { if (window.endTour) window.endTour(); }
+
+/* ---------- 事件 ---------- */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const act = el.dataset.act;
+
+  switch (act) {
+    case 'acc-toggle': {
+      const id = el.dataset.id;
+      state.selected = id;
+      state.expanded[id] = !state.expanded[id];
+      refresh();
+      break;
+    }
+    case 'acc-pick': {
+      const id = el.dataset.id;
+      state.selected = id;
+      refresh();
+      toast('已选中账号：' + accOf(id).name + '（收起态点击圆形头像可展开）', 'info');
+      break;
+    }
+    case 'open':
+      openPlatform(el.dataset.acc, el.dataset.key);
+      break;
+    case 'new-account':
+      accountDialog(null);
+      break;
+    case 'acc-edit':
+      e.stopPropagation();
+      accountDialog(accOf(el.dataset.id));
+      break;
+    case 'acc-del': {
+      e.stopPropagation();
+      const a = accOf(el.dataset.id);
+      confirmDialog('删除账号', '确定删除「<b>' + esc(a.name) + '</b>」吗？<br>该账号已打开的标签页将一并关闭。', () => {
+        const n = state.tabs.filter(t => t.accId === a.id).length;
+        state.tabs = state.tabs.filter(t => t.accId !== a.id);
+        state.accounts = state.accounts.filter(x => x.id !== a.id);
+        if (!state.tabs.length) state.activeTab = null;
+        else if (!state.tabs.find(t => t.id === state.activeTab)) state.activeTab = state.tabs[0].id;
+        refresh();
+        toast('已删除账号「' + a.name + '」' + (n ? '，并关闭其 ' + n + ' 个标签页' : ''), 'ok');
+      });
+      break;
+    }
+    case 'acc-save': {
+      const name = $('fName').value.trim();
+      if (!name) { toast('账号名称不能为空'); $('fName').focus(); return; }
+      const vals = {
+        name,
+        group: $('fGroup').value.trim(),
+        track: $('fTrack').value.trim(),
+        owner: $('fOwner').value.trim(),
+        status: $('fStatus').value,
+        realname: $('fReal').value.trim(),
+        note: $('fNote').value.trim(),
+      };
+      if (el.dataset.id) {
+        Object.assign(accOf(el.dataset.id), vals);
+        toast('已保存账号「' + name + '」', 'ok');
+      } else {
+        if (state.accounts.length >= MAX_ACCOUNTS) { toast('已达账号上限 ' + MAX_ACCOUNTS + ' 个'); return; }
+        const colors = ['#4E7FDE', '#E1251B', '#3F9B6D', '#7A5AF8', '#E8894A', '#2AA6B9'];
+        state.accounts.push(Object.assign({ id: 'a' + Date.now(), color: colors[state.accounts.length % colors.length] }, vals));
+        toast('已新增账号「' + name + '」', 'ok');
+      }
+      closeModal();
+      refresh();
+      break;
+    }
+    case 'settings':
+      settingsDialog();
+      break;
+    case 'modal-close':
+      closeModal();
+      break;
+    case 'do-backup':
+      toast('已备份到 %APPDATA%\\XHSManager\\backup_' + new Date().toISOString().slice(0, 10) + '.json', 'ok');
+      break;
+    case 'do-export':
+      toast('已导出账号台账（JSON）', 'ok');
+      break;
+    case 'do-import':
+      toast('演示环境：导入会覆盖本地数据并自动备份原数据', 'info');
+      break;
+    case 'do-dir':
+      toast('演示环境：真实工具内会打开 %APPDATA%\\XHSManager', 'info');
+      break;
+    case 'tab':
+      state.activeTab = el.dataset.id;
+      const t = state.tabs.find(x => x.id === el.dataset.id);
+      if (t) state.selected = t.accId;
+      refresh();
+      break;
+    case 'tab-close':
+      e.stopPropagation();
+      closeTab(el.dataset.id);
+      break;
+    case 'fake-login': {
+      const k = el.dataset.acc + ':' + el.dataset.key;
+      state.logins[k] = true;
+      refresh();
+      toast('登录成功 · 该登录态仅保存在「' + accOf(el.dataset.acc).name + '」的独立目录中', 'ok');
+      break;
+    }
+    case 'open-note': {
+      const tab = state.tabs.find(x => x.id === state.activeTab);
+      openPopup(tab.accId, 'note', '笔记详情', { i: +el.dataset.i, key: tab.backendKey });
+      break;
+    }
+    case 'manage-view': {
+      const tab = state.tabs.find(x => x.id === state.activeTab);
+      openPopup(tab.accId, 'note', '笔记详情', { i: +el.dataset.i, key: tab.backendKey });
+      break;
+    }
+    case 'publish': {
+      const tab = state.tabs.find(x => x.id === state.activeTab);
+      openPopup(tab.accId, 'publish', '发布预览', { key: tab.backendKey });
+      break;
+    }
+    case 'cr-sub': {
+      const tab = state.tabs.find(x => x.id === state.activeTab);
+      tab.sub = el.dataset.sub;
+      renderContent();
+      break;
+    }
+    case 'toast':
+      toast(el.dataset.msg || '演示环境', 'info');
+      break;
+    case 'expand':
+      state.collapsed = false;
+      refresh();
+      break;
+    case 'collapse':
+      state.collapsed = true;
+      refresh();
+      break;
+    case 'tour':
+      closeModal();
+      setTimeout(startTour, 60);
+      break;
+    case 'intro':
+      introDialog();
+      break;
+  }
+});
+
+/* 复选框 */
+document.addEventListener('click', e => {
+  const c = e.target.closest('#chkGpu');
+  if (!c) return;
+  state.hardwareAccel = !state.hardwareAccel;
+  c.classList.toggle('on', state.hardwareAccel);
+  $('gpuState').textContent = state.hardwareAccel
+    ? '已开启：需退出并重新打开工具后生效。若白屏 / 闪退，工具会自动回退软件渲染。'
+    : '已关闭：下次启动继续使用软件渲染。';
+});
+
+/* 搜索框 */
+document.addEventListener('input', e => {
+  if (e.target.id === 'sbFilter') {
+    state.filter = e.target.value;
+    renderSidebar();
+    const el = $('sbFilter');
+    if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+  }
+});
+
+/* 标题栏按钮 */
+$('navBack').innerHTML = ICON.back;
+$('navFwd').innerHTML = ICON.fwd;
+$('navReload').innerHTML = ICON.reload;
+$('navStop').innerHTML = ICON.stop;
+$('navExt').innerHTML = ICON.ext;
+$('winMin').innerHTML = ICON.min;
+$('winMax').innerHTML = ICON.max;
+$('winClose').innerHTML = ICON.close;
+$('fabTour').innerHTML = ICON.play + '功能导览';
+$('fabTour').dataset.act = 'tour';
+
+$('navBack').onclick = () => toast('演示环境：后退为上一步浏览记录', 'info');
+$('navFwd').onclick = () => toast('演示环境：前进为下一步浏览记录', 'info');
+$('navStop').onclick = () => toast('已停止加载');
+$('navReload').onclick = () => {
+  if (!state.activeTab) return;
+  loadProgress();
+  renderContent();
+  toast('已刷新当前页面');
+};
+$('navExt').onclick = () => toast('演示环境：真实工具内会用系统默认浏览器打开当前页面', 'info');
+$('winMin').onclick = () => toast('演示环境：最小化', 'info');
+$('winMax').onclick = () => { $('app').classList.toggle('maximized'); toast('演示环境：最大化 / 还原', 'info'); };
+$('winClose').onclick = () => toast('演示环境：真实工具内会退出程序', 'info');
+$('chipDemo').dataset.act = 'intro';
+
+/* 折叠把手：侧栏右边缘 */
+document.addEventListener('mousemove', e => {
+  if (state.collapsed) return;
+  const sb = $('sidebar'), r = sb.getBoundingClientRect();
+  const near = e.clientX > r.right - 10 && e.clientX < r.right + 2 && e.clientY > r.top && e.clientY < r.bottom;
+  sb.style.cursor = near ? 'pointer' : '';
+});
+document.addEventListener('mousedown', e => {
+  if (state.collapsed) return;
+  const sb = $('sidebar'), r = sb.getBoundingClientRect();
+  if (e.clientX > r.right - 10 && e.clientX < r.right + 2 && e.clientY > r.top && e.clientY < r.bottom) {
+    state.collapsed = true;
+    refresh();
+    toast('侧栏已收起 · 点击底部箭头图标可展开', 'info');
+  }
+});
+
+/* Esc 关闭 */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); endTour(); }
+});
+
+/* 初始化 */
+refresh();
+setTimeout(introDialog, 350);
+</script>
+</body>
+</html>

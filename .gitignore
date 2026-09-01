@@ -1,0 +1,25 @@
+# ===== 构建产物（体积巨大，不传 GitHub）=====
+dist/
+build/xhs_manager/
+build/xhs_manager_onefile/
+build/_old_*/
+build/*.png
+build/*.toc
+build/_*.py
+build/__pycache__/
+
+# ===== Python 缓存 =====
+__pycache__/
+*.py[cod]
+*.pyo
+
+# ===== 项目私有记忆（含本地路径/笔记，不要公开）=====
+.workbuddy/
+
+# ===== 文档：二进制不传，保留 markdown =====
+*.docx
+
+# ===== 系统 / 编辑器 =====
+.DS_Store
+Thumbs.db
+*.swp

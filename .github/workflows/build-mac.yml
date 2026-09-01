@@ -1,0 +1,72 @@
+name: 构建 macOS 应用
+
+# 用途：在 GitHub 的 macOS 云机器上打包出真正的 .app，
+#       对方拿到后双击即可运行，无需安装 Python 环境。
+#
+# 触发方式二选一：
+#   1) 手动：仓库页面 → Actions → 本工作流 → Run workflow
+#   2) 打标签：git tag v6.6.0 && git push origin v6.6.0
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: 构建 ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macos-13 是 Intel 机器 → 产出 x86_64 版（兼容所有 Intel Mac）
+          - os: macos-13
+            arch: intel
+          # macos-15 是 Apple Silicon 机器 → 产出 arm64 版（M 系列原生，更快）
+          - os: macos-15
+            arch: apple-silicon
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 准备 Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install "PyQt6>=6.6,<7" "PyQt6-WebEngine>=6.6,<7" "PyInstaller>=6.3"
+
+      - name: 打包（spec 用 cwd 定位，必须在项目根目录运行）
+        run: python -m PyInstaller --noconfirm build/xhs_manager_mac.spec
+
+      - name: 本地签名（免开发者账号）
+        run: |
+          codesign --force --deep --sign - \
+            --entitlements build/entitlements.plist \
+            "dist/小红书多账号管理.app" \
+            || codesign --force --deep --sign - "dist/小红书多账号管理.app"
+          codesign --verify --deep --strict --verbose=2 "dist/小红书多账号管理.app" || true
+
+      - name: 压缩（ditto 保留执行位，普通 zip 会丢）
+        run: ditto -c -k --keepParent "dist/小红书多账号管理.app" "小红书多账号管理_macOS_${{ matrix.arch }}.zip"
+
+      - name: 上传产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: 小红书多账号管理_macOS_${{ matrix.arch }}
+          path: 小红书多账号管理_macOS_${{ matrix.arch }}.zip
+          retention-days: 30
+
+      - name: 随 Release 发布（仅打标签时）
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: 小红书多账号管理_macOS_${{ matrix.arch }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

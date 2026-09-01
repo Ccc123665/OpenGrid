@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "note": "六大官方PC后台定义；新增官方后台只需在此追加一项，无需改代码。icon 仅作为可选项，UI 中已默认不渲染 emoji。",
+  "backends": [
+    {
+      "key": "explore",
+      "name": "兴趣社区",
+      "url": "https://www.xiaohongshu.com/explore",
+      "desc": "浏览/发现页，日常内容观察",
+      "icon": ""
+    },
+    {
+      "key": "creator",
+      "name": "创作服务平台",
+      "url": "https://creator.xiaohongshu.com/publish/publish?source=official",
+      "desc": "笔记发布/编辑",
+      "icon": ""
+    },
+    {
+      "key": "pro",
+      "name": "专业号后台",
+      "url": "https://pro.xiaohongshu.com/login?redirectTo=%2Fenterprise%2Fhome",
+      "desc": "商家/账号资质运营",
+      "icon": ""
+    },
+    {
+      "key": "ark",
+      "name": "千帆PC端",
+      "url": "https://ark.xiaohongshu.com/app-system/home?from=xhsweb",
+      "desc": "内容矩阵/机构运营",
+      "icon": ""
+    },
+    {
+      "key": "ad",
+      "name": "聚光平台",
+      "url": "https://ad.xiaohongshu.com/aurora/ad/manage/campaign",
+      "desc": "广告投放/流量推广",
+      "icon": ""
+    },
+    {
+      "key": "reserved",
+      "name": "预留拓展端口",
+      "url": "",
+      "desc": "后续新增官方PC运营后台接入位（在 backends.json 中补充 url 即可启用）",
+      "icon": "",
+      "reserved": true
+    }
+  ]
+}
